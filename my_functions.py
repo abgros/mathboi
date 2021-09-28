@@ -125,7 +125,8 @@ def get_puzzle():
                 break
 
         initial = chess.Move.from_uci(curr_line[2][:4])
-        board = chess.Board(curr_line[1]).push(initial)
+        board = chess.Board(curr_line[1])
+        board.push(initial)
         answer = board.san(chess.Move.from_uci(curr_line[2].split(' ')[1])).lower()
         fen = board.fen()
         side_to_move = board.turn
