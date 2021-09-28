@@ -62,7 +62,7 @@ async def on_message(message):
     message.content = message.content.lower()
 
     if message.content == 'do help':
-        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle")
+        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle\ndo chess")
 
     if message.content == 'do math':
         if message.channel.id not in doing_math_in.keys():
@@ -136,13 +136,12 @@ async def on_message(message):
             img_name = 'chess_' + str(message.channel.id) + '.png'
             
             if white_to_move:
-                await message.channel.send("**WHITE TO MOVE**\n" + "Format example: `e2e4`")
+                await message.channel.send("**WHITE TO MOVE**\n")
             else:
-                await message.channel.send("**BLACK TO MOVE**\n" + "Format example: `e2e4`")
+                await message.channel.send("**BLACK TO MOVE**\n")
                 
-            await message.channel.send(file=discord.File(my.render(fen, img_name)))
+            await message.channel.send(file=discord.File(my.render(fen, img_name, white_to_move)))
             doing_chess_in[message.channel.id] = [answer, time()]
-            
             return
 
         await message.channel.send("Already doing Chess.")
