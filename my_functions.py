@@ -105,11 +105,11 @@ def draw_squares(border, img_size, grid, difficulty, img_name):
     im2.save(img_name)
     return [str(ans_x), str(ans_y)]
 
-def render(fen, img_name, white_to_move):
+def render(fen, img_name, white_to_move, initial):
     if white_to_move:
-        svg_text = chess.svg.board(chess.Board(fen), size=72, orientation=chess.WHITE).encode()
+        svg_text = chess.svg.board(chess.Board(fen), size=72, lastmove=initial, orientation=chess.WHITE).encode()
     else:
-        svg_text = chess.svg.board(chess.Board(fen), size=72, orientation=chess.BLACK).encode()        
+        svg_text = chess.svg.board(chess.Board(fen), size=72, lastmove=initial, orientation=chess.BLACK).encode()        
     output = pyvips.Image.svgload_buffer(svg_text, dpi=1000)
     output.write_to_file(img_name)
 
@@ -123,11 +123,11 @@ def get_puzzle():
             if i == n:
                 curr_line = line.split(',')
                 break
-            
-        board = chess.Board(curr_line[1])
-        board.push(chess.Move.from_uci(curr_line[2][:4]))
+
+        initial = chess.Move.from_uci(curr_line[2][:4])
+        board = chess.Board(curr_line[1]).push(initial)
         answer = board.san(chess.Move.from_uci(curr_line[2].split(' ')[1])).lower()
         fen = board.fen()
         side_to_move = board.turn
 
-    return [fen, answer, side_to_move]
+    return [fen, answer, side_to_move, initial]
