@@ -84,7 +84,7 @@ async def on_message(message):
             answer = choice(wordlist)
             response = my.scramble(answer)
             
-            await message.channel.send("**DO SCRAMBLE**\n" + "`" + response + "`")
+            await message.channel.send("**UNSCRAMBLE THIS**\n" + "`" + response + "`")
             doing_scramble_in[message.channel.id] = [answer, time()]
 
             return
