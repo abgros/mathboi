@@ -132,6 +132,7 @@ async def on_message(message):
             fen = puzzle[0]
             answer = puzzle[1]
             white_to_move = puzzle[2]
+            initial = puzzle[3]
             
             img_name = 'chess_' + str(message.channel.id) + '.png'
             
@@ -140,7 +141,7 @@ async def on_message(message):
             else:
                 await message.channel.send("**BLACK TO MOVE**\n")
                 
-            await message.channel.send(file=discord.File(my.render(fen, img_name, white_to_move)))
+            await message.channel.send(file=discord.File(my.render(fen, img_name, white_to_move, initial)))
             doing_chess_in[message.channel.id] = [answer, time()]
             return
 
