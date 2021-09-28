@@ -105,26 +105,28 @@ def draw_squares(border, img_size, grid, difficulty, img_name):
     im2.save(img_name)
     return [str(ans_x), str(ans_y)]
 
-def render(fen, img_name):
-    svg_text = chess.svg.board(chess.Board(fen), size=72).encode()
+def render(fen, img_name, white_to_move):
+    if white_to_move:
+        svg_text = chess.svg.board(chess.Board(fen), size=72, orientation=chess.WHITE).encode()
+    else:
+        svg_text = chess.svg.board(chess.Board(fen), size=72, orientation=chess.BLACK).encode()        
     output = pyvips.Image.svgload_buffer(svg_text, dpi=1000)
     output.write_to_file(img_name)
 
     return img_name
 
 def get_puzzle():
-    # n can be 0 to 1737488
-    n = randint(0, 1737488)
+    # n can be 0 to 1857574 - 1
+    n = randint(0, 1857573)
     with open("lichess_db_puzzle.csv") as f:
         for i, line in enumerate(f):
             if i == n:
                 curr_line = line.split(',')
-                fen = curr_line[1]
-                initial = curr_line[2][:4]
-                answer = curr_line[2][5:9]
                 break
-        board = chess.Board(fen)
-        board.push(chess.Move.from_uci(initial))
+            
+        board = chess.Board(curr_line[1])
+        board.push(chess.Move.from_uci(curr_line[2][:4]))
+        answer = board.san(chess.Move.from_uci(curr_line[2].split(' ')[1])).lower()
         fen = board.fen()
         side_to_move = board.turn
 
