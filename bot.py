@@ -96,7 +96,7 @@ async def on_message(message):
         if message.channel.id not in doing_typing_in.keys():
             doing_typing_in[message.channel.id] = []
             words = []
-            for i in range(randint(2, 5)):
+            for i in range(randint(3, 6)):
                 words += [choice(wordlist)]
             img_name = 'typing_' + str(message.channel.id) + '.png'
             answer = ' '.join(words)
