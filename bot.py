@@ -33,7 +33,6 @@ import pyvips
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
 
 client = discord.Client(activity=discord.Game(name='Bedwars'))
 lb = tinydb.TinyDB('lb.json')
