@@ -166,9 +166,12 @@ async def on_message(message):
             output += f"\n{p+1}: **{total_wins(highest[p])} wins `{highest[p]['user']}`**"
             
         # If user has wins but is not on the leaderboard
-        if username not in highest_players[:SHOW_TOP] and lb.contains(tinydb.Query().user == username):
-            user_index = highest_players.index(username)
-            output += f"\n\nYour rank: **{user_index+1}** ({total_wins(highest[user_index])} wins)"
+        if username not in highest_players[:SHOW_TOP]:
+            if lb.contains(tinydb.Query().user == username):
+                user_index = highest_players.index(username)
+                output += f"\n\nYour rank: **{user_index+1}** ({total_wins(highest[user_index])} wins)"
+            else:
+                output += "\n\nYour rank: **∞** (0 wins lol)"
             
         await message.channel.send(output)
 
@@ -201,8 +204,8 @@ async def on_message(message):
                                'chess': 0})
                 lb.update(tinydb.operations.increment(game), tinydb.Query().user == username)
 
-                
-#@client.event
+               
+@client.event
 async def on_error(event, *args, **kwargs):
     with open('err.log', 'a') as log:
         if event == 'on_message':
