@@ -2,12 +2,17 @@
 import os
 import discord
 
-import my_functions as m
+import my_functions as my
 
 from time import time
 from math import sqrt
 from random import randint, choice, random, shuffle, uniform
 from dotenv import load_dotenv
+
+### Database
+
+import tinydb
+import tinydb.operations
 
 ### Image stuff
 
@@ -31,15 +36,17 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
 client = discord.Client(activity=discord.Game(name='Bedwars'))
+lb = tinydb.TinyDB('lb.json')
 
-doing_math_in = {}
-doing_scramble_in = {}
-doing_typing_in = {}
-doing_eagle_in = {}
-doing_chess_in = {}
+doing_math_in = {'command': 'math'}
+doing_scramble_in = {'command': 'scramble'}
+doing_typing_in = {'command': 'typing'}
+doing_eagle_in = {'command': 'eagle'}
+doing_chess_in = {'command': 'chess'}
 
-doing_in_dicts = [doing_math_in, doing_scramble_in,
-                  doing_typing_in, doing_eagle_in, doing_chess_in]
+doing_in = [doing_math_in, doing_scramble_in, doing_typing_in,
+            doing_eagle_in, doing_chess_in]
+
 
 # 1520 common words
 with open('wordlist.txt') as f:
@@ -59,12 +66,13 @@ async def on_message(message):
         print(f"Message sent in {message.guild.name}: {message.content}")
         return
 
-    message.content = message.content.lower()
+    message_text = message.content.lower()
+    username = str(message.author)
 
-    if message.content == 'do help':
-        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle\ndo chess")
+    if message_text == 'do help':
+        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle\ndo chess\ndo leaderboard")
 
-    if message.content == 'do math':
+    if message_text == 'do math':
         if message.channel.id not in doing_math_in.keys():
             doing_math_in[message.channel.id] = []
             response = my.problem()
@@ -78,7 +86,7 @@ async def on_message(message):
         
         await message.channel.send("Already doing math.")
 
-    if message.content == 'do scramble':
+    if message_text == 'do scramble':
         if message.channel.id not in doing_scramble_in.keys():
             doing_scramble_in[message.channel.id] = []
             answer = choice(wordlist)
@@ -92,7 +100,7 @@ async def on_message(message):
         await message.channel.send("Already doing scramble.")
 
 
-    if message.content == 'do typing':
+    if message_text == 'do typing':
         if message.channel.id not in doing_typing_in.keys():
             doing_typing_in[message.channel.id] = []
             words = []
@@ -109,7 +117,7 @@ async def on_message(message):
         
         await message.channel.send("Already doing typing.")
 
-    if message.content == 'do eagle':
+    if message_text == 'do eagle':
         if message.channel.id not in doing_eagle_in.keys():
             doing_eagle_in[message.channel.id] = []
             img_name = 'eagle_' + str(message.channel.id) + '.png'
@@ -125,7 +133,7 @@ async def on_message(message):
 
         await message.channel.send("Already doing Eagle.")
 
-    if message.content == 'do chess':
+    if message_text == 'do chess':
         if message.channel.id not in doing_chess_in.keys():
             doing_chess_in[message.channel.id] = []
             puzzle = my.get_puzzle()
@@ -147,7 +155,25 @@ async def on_message(message):
 
         await message.channel.send("Already doing Chess.")
 
-    if message.content == 'chamoy':
+    if message_text == 'do leaderboard':
+        total_wins = lambda x: x['math'] + x['scramble'] + x['typing'] + x['eagle'] + x['chess']
+        highest = lb.all()
+        highest.sort(key=total_wins, reverse=True)
+        highest_players = [entry['user'] for entry in highest]
+        SHOW_TOP = min(len(highest), 5)
+        
+        output = "**LEADERBOARD**"
+        for p in range(SHOW_TOP):
+            output += f"\n{p+1}: **{total_wins(highest[p])} wins `{highest[p]['user']}`**"
+            
+        # If user has wins but is not on the leaderboard
+        if username not in highest_players[:SHOW_TOP] and lb.contains(tinydb.Query().user == username):
+            user_index = highest_players.index(username)
+            output += f"\n\nYour rank: **{user_index+1}** ({total_wins(highest[user_index])} wins)"
+            
+        await message.channel.send(output)
+
+    if message_text == 'chamoy':
         if message.reference is not None:
             try:
                 await message.delete()
@@ -158,14 +184,26 @@ async def on_message(message):
 
             return
 
-    for doing_x_in in doing_in_dicts:
+    for doing_x_in in doing_in:
         if message.channel.id in doing_x_in.keys():
-            if message.content == doing_x_in[message.channel.id][0]:
+            if message_text == doing_x_in[message.channel.id][0]:
                 elapsed = time() - doing_x_in[message.channel.id][1]
                 del doing_x_in[message.channel.id]
                 await message.channel.send("**{}** got the answer in {:.3f} seconds.".format(message.author, elapsed))
 
-@client.event
+                # Database update
+                game = doing_x_in['command']
+                if not lb.contains(tinydb.Query().user == username):
+                    lb.insert({'user': username,
+                               'math': 0,
+                               'scramble': 0,
+                               'typing': 0,
+                               'eagle': 0,
+                               'chess': 0})
+                lb.update(tinydb.operations.increment(game), tinydb.Query().user == username)
+
+                
+#@client.event
 async def on_error(event, *args, **kwargs):
     with open('err.log', 'a') as log:
         if event == 'on_message':
