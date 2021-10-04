@@ -82,7 +82,7 @@ async def on_message(message):
     username = str(message.author)
 
     if message_text == 'do help':
-        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle\ndo chess\ndo leaderboard\ndo clear")
+        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle\ndo chess\ndo leaderboard\ndo reveal")
 
     if message_text == 'do math':
         if message.channel.id not in doing_math_in.keys():
@@ -188,12 +188,15 @@ async def on_message(message):
             
         await message.channel.send(output)
 
-    if message_text == 'do clear':
+    if message_text == 'do reveal':
+        output = ''
         for doing_x_in in doing_in:
             if message.channel.id in doing_x_in:
+                output += f"Answer for `{doing_x_in['command']}`: {doing_x_in[message.channel.id][0]}\n"
                 del doing_x_in[message.channel.id]
 
-        await message.channel.send("Cleared all channel games.")
+        output += "All channel games have been cleared."
+        await message.channel.send(output)
         return
 
     if message_text == 'chamoy':
