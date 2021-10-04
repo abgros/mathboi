@@ -33,6 +33,7 @@ import pyvips
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+GUILD_LIST = [int(id) for id in os.getenv('GUILD_LIST').split(',')]
 
 client = discord.Client(activity=discord.Game(name='Bedwars'))
 lb = tinydb.TinyDB('lb.json')
@@ -47,29 +48,41 @@ doing_in = [doing_math_in, doing_scramble_in, doing_typing_in,
             doing_eagle_in, doing_chess_in]
 
 
-# 1520 common words
-with open('wordlist.txt') as f:
-    wordlist = [i.rstrip('\n') for i in f.readlines()]
+with open('wordlist_s.txt') as f:
+    scramblelist = [i.rstrip('\n') for i in f.readlines()]
+
+with open('wordlist_t.txt') as f:
+    typinglist = [i.rstrip('\n') for i in f.readlines()]
+
 
 @client.event
 async def on_ready():
     guilds = await client.fetch_guilds(limit=150).flatten()
     print(f"{client.user} is connected to the following guilds:")
     for guild in guilds:
-        print(f"{guild.name} [{guild.id}]")
+        if guild.id in GUILD_LIST:
+            print(f"{guild.name} [{guild.id}]")
+        else:
+            await guild.leave()
     print('')
+
+
+@client.event
+async def on_guild_join(guild):
+    if guild.id not in GUILD_LIST:
+        await guild.leave()
+
 
 @client.event
 async def on_message(message):
     if message.author == client.user:
-        print(f"Message sent in {message.guild.name}: {message.content}")
         return
 
     message_text = message.content.lower()
     username = str(message.author)
 
     if message_text == 'do help':
-        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle\ndo chess\ndo leaderboard")
+        await message.channel.send("**Commands List:**\ndo help (this one)\ndo math\ndo scramble\ndo typing\ndo eagle\ndo chess\ndo leaderboard\ndo clear")
 
     if message_text == 'do math':
         if message.channel.id not in doing_math_in.keys():
@@ -88,7 +101,7 @@ async def on_message(message):
     if message_text == 'do scramble':
         if message.channel.id not in doing_scramble_in.keys():
             doing_scramble_in[message.channel.id] = []
-            answer = choice(wordlist)
+            answer = choice(scramblelist)
             response = my.scramble(answer)
             
             await message.channel.send("**UNSCRAMBLE THIS**\n" + "`" + response + "`")
@@ -104,7 +117,7 @@ async def on_message(message):
             doing_typing_in[message.channel.id] = []
             words = []
             for i in range(randint(4, 10)):
-                words += [choice(wordlist)]
+                words += [choice(typinglist)]
             img_name = 'typing_' + str(message.channel.id) + '.png'
             answer = ' '.join(words)
             
@@ -174,6 +187,14 @@ async def on_message(message):
                 output += "\n\nYour rank: **∞** (0 wins lol)"
             
         await message.channel.send(output)
+
+    if message_text == 'do clear':
+        for doing_x_in in doing_in:
+            if message.channel.id in doing_x_in:
+                del doing_x_in[message.channel.id]
+
+        await message.channel.send("Cleared all channel games.")
+        return
 
     if message_text == 'chamoy':
         if message.reference is not None:
