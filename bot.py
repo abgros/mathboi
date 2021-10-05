@@ -54,6 +54,9 @@ with open('wordlist_s.txt') as f:
 with open('wordlist_t.txt') as f:
     typinglist = [i.rstrip('\n') for i in f.readlines()]
 
+with open("lichess_db_puzzle.csv") as f:
+    puzzlelist = [','.join(i.split(',')[1:3]) for i in f.readlines()]
+
 
 @client.event
 async def on_ready():
@@ -147,21 +150,23 @@ async def on_message(message):
 
     if message_text == 'do chess':
         if message.channel.id not in doing_chess_in.keys():
-            doing_chess_in[message.channel.id] = []
-            puzzle = my.get_puzzle()
-            fen = puzzle[0]
-            answer = puzzle[1]
-            white_to_move = puzzle[2]
-            initial = puzzle[3]
-            
+            puzzle = choice(puzzlelist).split(',')
+            initial = chess.Move.from_uci(puzzle[1][:4])
+            board = chess.Board(puzzle[0])
+            board.push(initial)
+            fen = board.fen()
+            white_to_move = board.turn
+            answer = board.san(chess.Move.from_uci(puzzle[1].split(' ')[1])).lower()
             img_name = 'chess_' + str(message.channel.id) + '.png'
-            
+
+            chess_img = my.render(fen, img_name, white_to_move, initial)
+
             if white_to_move:
                 await message.channel.send("**WHITE TO MOVE**\n")
             else:
                 await message.channel.send("**BLACK TO MOVE**\n")
-                
-            await message.channel.send(file=discord.File(my.render(fen, img_name, white_to_move, initial)))
+
+            await message.channel.send(file=discord.File(chess_img))
             doing_chess_in[message.channel.id] = [answer, time()]
             return
 
