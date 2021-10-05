@@ -114,21 +114,3 @@ def render(fen, img_name, white_to_move, initial):
     output.write_to_file(img_name)
 
     return img_name
-
-def get_puzzle():
-    # n can be 0 to 1857574 - 1
-    n = randint(0, 1857573)
-    with open("lichess_db_puzzle.csv") as f:
-        for i, line in enumerate(f):
-            if i == n:
-                curr_line = line.split(',')
-                break
-
-        initial = chess.Move.from_uci(curr_line[2][:4])
-        board = chess.Board(curr_line[1])
-        board.push(initial)
-        answer = board.san(chess.Move.from_uci(curr_line[2].split(' ')[1])).lower()
-        fen = board.fen()
-        side_to_move = board.turn
-
-    return [fen, answer, side_to_move, initial]
